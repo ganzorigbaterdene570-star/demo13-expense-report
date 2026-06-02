@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2025 оны Зардлын Дүгнэлт</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #1a1a2e; }
+
+  .header {
+    background: linear-gradient(135deg, #1e3a5f 0%, #2d6a9f 100%);
+    color: white; padding: 32px 40px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  }
+  .header h1 { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+  .header p { opacity: 0.85; font-size: 14px; }
+
+  .container { max-width: 1200px; margin: 0 auto; padding: 30px 20px; }
+
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 30px; }
+  .kpi-card {
+    background: white; border-radius: 12px; padding: 20px 24px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    border-left: 4px solid #2d6a9f;
+  }
+  .kpi-card.green { border-left-color: #27ae60; }
+  .kpi-card.red { border-left-color: #e74c3c; }
+  .kpi-card.orange { border-left-color: #f39c12; }
+  .kpi-card.purple { border-left-color: #8e44ad; }
+  .kpi-label { font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .kpi-value { font-size: 22px; font-weight: 700; color: #1a1a2e; }
+  .kpi-sub { font-size: 12px; color: #888; margin-top: 4px; }
+
+  .section { background: white; border-radius: 14px; padding: 28px; margin-bottom: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+  .section-title { font-size: 17px; font-weight: 700; color: #1e3a5f; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #e8f0fe; display: flex; align-items: center; gap: 8px; }
+
+  .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+  .chart-box { background: white; border-radius: 14px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+  .chart-title { font-size: 15px; font-weight: 600; color: #1e3a5f; margin-bottom: 16px; }
+  .chart-wrap { position: relative; height: 280px; }
+
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { background: #f5f7fb; color: #444; font-weight: 600; padding: 10px 14px; text-align: left; border-bottom: 2px solid #e0e6f0; }
+  td { padding: 10px 14px; border-bottom: 1px solid #f0f3f8; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #fafbff; }
+  .tag { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .tag-good { background: #e8f8f0; color: #1e8449; }
+  .tag-bad { background: #fdecea; color: #c0392b; }
+  .tag-warn { background: #fff8e1; color: #b7770d; }
+
+  .bar-item { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .bar-label { width: 140px; font-size: 13px; color: #444; flex-shrink: 0; text-align: right; }
+  .bar-track { flex: 1; background: #f0f3f8; border-radius: 6px; height: 22px; overflow: hidden; position: relative; }
+  .bar-fill { height: 100%; border-radius: 6px; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px; font-size: 11px; color: white; font-weight: 600; white-space: nowrap; transition: width 0.8s ease; }
+  .bar-pct { width: 44px; font-size: 12px; color: #666; text-align: right; flex-shrink: 0; }
+
+  .alert-box { border-radius: 10px; padding: 16px 20px; margin-bottom: 14px; display: flex; gap: 14px; align-items: flex-start; }
+  .alert-box.red { background: #fdf2f2; border: 1px solid #f5c6c6; }
+  .alert-box.orange { background: #fff8ef; border: 1px solid #f5dba0; }
+  .alert-box.blue { background: #eff6ff; border: 1px solid #bfdbfe; }
+  .alert-icon { font-size: 22px; flex-shrink: 0; }
+  .alert-title { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+  .alert-body { font-size: 13px; color: #555; line-height: 1.6; }
+
+  .monthly-table td.amount { font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+  .monthly-table td.month { font-weight: 600; color: #2d6a9f; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+
+  .legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 13px; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+
+  @media(max-width: 768px) {
+    .charts-row, .two-col { grid-template-columns: 1fr; }
+    .kpi-grid { grid-template-columns: 1fr 1fr; }
+    .bar-label { width: 110px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📊 2025 оны Зардлын Дүгнэлт</h1>
+  <p>1–9 сарын зардлын шинжилгээ · Үр ашигтай ба үр ашиггүй зардлын тодорхойлолт</p>
+</div>
+
+<div class="container">
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">Нийт зардал (1–9 сар)</div>
+      <div class="kpi-value">293.2 сая ₮</div>
+      <div class="kpi-sub">10 ангиллын зардал</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">Үр ашигтай зардал</div>
+      <div class="kpi-value">184.2 сая ₮</div>
+      <div class="kpi-sub">62.8% — Зайлшгүй шаардлагатай</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-label">Үр ашиггүй зардал</div>
+      <div class="kpi-value">74.4 сая ₮</div>
+      <div class="kpi-sub">25.4% — Бууруулах боломжтой</div>
+    </div>
+    <div class="kpi-card orange">
+      <div class="kpi-label">Тодорхойгүй зардал</div>
+      <div class="kpi-value">34.5 сая ₮</div>
+      <div class="kpi-sub">11.8% — Тодруулах шаардлагатай</div>
+    </div>
+    <div class="kpi-card purple">
+      <div class="kpi-label">Хамгийн их зардал</div>
+      <div class="kpi-value">8-р сар</div>
+      <div class="kpi-sub">123.7 сая ₮ — Оргил зардал</div>
+    </div>
+  </div>
+
+  <!-- Charts row -->
+  <div class="charts-row">
+    <div class="chart-box">
+      <div class="chart-title">Зардлын ангиллын харьцаа</div>
+      <div class="chart-wrap">
+        <canvas id="pieChart"></canvas>
+      </div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">Сар бүрийн нийт зардал (₮ сая)</div>
+      <div class="chart-wrap">
+        <canvas id="monthlyChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Category breakdown bars -->
+  <div class="section">
+    <div class="section-title">📋 Зардлын ангиллын дэлгэрэнгүй</div>
+
+    <div style="margin-bottom:8px;font-size:12px;color:#888;">Зардлын дүн · Нийт зардалд эзлэх хувь</div>
+
+    <div class="bar-item">
+      <div class="bar-label">Зээл</div>
+      <div class="bar-track"><div class="bar-fill" style="width:39.3%;background:#2d6a9f;">115.3M₮</div></div>
+      <div class="bar-pct">39.3%</div>
+    </div>
+    <div class="bar-item">
+      <div class="bar-label">Түлш</div>
+      <div class="bar-track"><div class="bar-fill" style="width:12.3%;background:#27ae60;">36.2M₮</div></div>
+      <div class="bar-pct">12.3%</div>
+    </div>
+    <div class="bar-item">
+      <div class="bar-label">Засварт ⚠️</div>
+      <div class="bar-track"><div class="bar-fill" style="width:11.8%;background:#e74c3c;">34.6M₮</div></div>
+      <div class="bar-pct">11.8%</div>
+    </div>
+    <div class="bar-item">
+      <div class="bar-label">Сэлбэг ⚠️</div>
+      <div class="bar-track"><div class="bar-fill" style="width:11.6%;background:#e74c3c;">34.1M₮</div></div>
+      <div class="bar-pct">11.6%</div>
+    </div>
+    <div class="bar-item">
+      <div class="bar-label">Оффис хангамж ⚠️</div>
+      <div class="bar-track"><div class="bar-fill" style="width:11.5%;background:#f39c12;">33.7M₮</div></div>
+      <div class="bar-pct">11.5%</div>
+    </div>
+    <div class="bar-item">
+      <div class="bar-label">Хангамж</div>
+      <div class="bar-track"><div class="bar-fill" style="width:4.9%;background:#27ae60;">14.3M₮</div></div>
+      <div class="bar-pct">4.9%</div>
+    </div>
+    <div class="bar-item">
+      <div class="bar-label">Хүнс / кэмп</div>
+      <div class="bar-track"><div class="bar-fill" style="width:3.5%;background:#27ae60;">10.3M₮</div></div>
+      <div class="bar-pct">3.5%</div>
+    </div>
+    <div class="bar-item">
+      <div class="bar-label">Тос тосолгоо</div>
+      <div class="bar-track"><div class="bar-fill" style="width:2.8%;background:#27ae60;">8.2M₮</div></div>
+      <div class="bar-pct">2.8%</div>
+    </div>
+    <div class="bar-item">
+      <div class="bar-label">ХАБ ⚠️</div>
+      <div class="bar-track"><div class="bar-fill" style="width:2.0%;background:#8e44ad;">5.9M₮</div></div>
+      <div class="bar-pct">2.0%</div>
+    </div>
+    <div class="bar-item">
+      <div class="bar-label">хогны төлбөр</div>
+      <div class="bar-track"><div class="bar-fill" style="width:0.4%;background:#e74c3c;">0.6M₮</div></div>
+      <div class="bar-pct">0.2%</div>
+    </div>
+  </div>
+
+  <!-- Two column: Good vs Bad -->
+  <div class="two-col">
+    <div class="section" style="margin-bottom:0">
+      <div class="section-title">✅ Үр ашигтай зардал</div>
+      <table>
+        <tr>
+          <th>Зардлын нэр</th>
+          <th style="text-align:right">Дүн</th>
+          <th>Шалтгаан</th>
+        </tr>
+        <tr>
+          <td><strong>Зээл</strong></td>
+          <td style="text-align:right;font-weight:600">115.3M₮</td>
+          <td><span class="tag tag-good">Зайлшгүй</span></td>
+        </tr>
+        <tr>
+          <td><strong>Түлш</strong></td>
+          <td style="text-align:right;font-weight:600">36.2M₮</td>
+          <td><span class="tag tag-good">Үйлдвэрлэл</span></td>
+        </tr>
+        <tr>
+          <td><strong>Хангамж</strong></td>
+          <td style="text-align:right;font-weight:600">14.3M₮</td>
+          <td><span class="tag tag-good">Ажиллагаа</span></td>
+        </tr>
+        <tr>
+          <td><strong>Хүнс / кэмп</strong></td>
+          <td style="text-align:right;font-weight:600">10.3M₮</td>
+          <td><span class="tag tag-good">Ажилчид</span></td>
+        </tr>
+        <tr>
+          <td><strong>Тос тосолгоо</strong></td>
+          <td style="text-align:right;font-weight:600">8.2M₮</td>
+          <td><span class="tag tag-good">Урьдчилан сэргийлэх</span></td>
+        </tr>
+        <tr style="background:#f5fdf8">
+          <td><strong>Нийт</strong></td>
+          <td style="text-align:right;font-weight:700;color:#1e8449">184.2M₮</td>
+          <td><span class="tag tag-good">62.8%</span></td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="section" style="margin-bottom:0">
+      <div class="section-title">❌ Үр ашиггүй / асуудалтай зардал</div>
+      <table>
+        <tr>
+          <th>Зардлын нэр</th>
+          <th style="text-align:right">Дүн</th>
+          <th>Асуудал</th>
+        </tr>
+        <tr>
+          <td><strong>Засварт</strong></td>
+          <td style="text-align:right;font-weight:600">34.6M₮</td>
+          <td><span class="tag tag-bad">Өсч буй</span></td>
+        </tr>
+        <tr>
+          <td><strong>Сэлбэг</strong></td>
+          <td style="text-align:right;font-weight:600">34.1M₮</td>
+          <td><span class="tag tag-bad">Яаралтай</span></td>
+        </tr>
+        <tr>
+          <td><strong>Оффис хангамж</strong></td>
+          <td style="text-align:right;font-weight:600">33.7M₮</td>
+          <td><span class="tag tag-warn">Буруу ангилал</span></td>
+        </tr>
+        <tr>
+          <td><strong>ХАБ</strong></td>
+          <td style="text-align:right;font-weight:600">5.9M₮</td>
+          <td><span class="tag tag-warn">Тодорхойгүй</span></td>
+        </tr>
+        <tr>
+          <td><strong>хогны төлбөр</strong></td>
+          <td style="text-align:right;font-weight:600">0.6M₮</td>
+          <td><span class="tag tag-bad">Зайлсхийх</span></td>
+        </tr>
+        <tr style="background:#fdf8f8">
+          <td><strong>Нийт</strong></td>
+          <td style="text-align:right;font-weight:700;color:#c0392b">108.9M₮</td>
+          <td><span class="tag tag-bad">37.2%</span></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- Repair/spare parts trend -->
+  <div class="section">
+    <div class="section-title">📈 Засварт + Сэлбэгийн өсөлтийн хандлага</div>
+    <div style="position:relative;height:260px;">
+      <canvas id="repairChart"></canvas>
+    </div>
+    <p style="font-size:12px;color:#888;margin-top:12px;">* 5-р сараас 8-р сарт Засварт 1.8 дахин, Сэлбэг 22 дахин өссөн байна. Урьдчилан сэргийлэх арчилгааны хуваарь шаардлагатай.</p>
+  </div>
+
+  <!-- Alerts -->
+  <div class="section">
+    <div class="section-title">🚨 Анхаарал шаардлагатай олдворууд</div>
+
+    <div class="alert-box red">
+      <div class="alert-icon">🔴</div>
+      <div>
+        <div class="alert-title">Оффис хангамжид буруу ангилагдсан зардал (33.7M₮)</div>
+        <div class="alert-body">
+          Дотор нь: зоогийн газар (Дэ булл хот пот), нисэх тийз (Хүннү-Эйр 1.3M₮), хувь хүний төлбөр (ДОЛГОР БОЛДХУЯГ 1.88M₮, ХОЛООХ БАТДОРЖ 650K₮), түрээсийн зардал (4.5M₮), буцаалт (1.1M₮) зэрэг зардал "Оффис хангамж" гэж тооцогдсон байна. Санхүүгийн тайлангийн бодит байдлыг гажуудуулж байна.
+        </div>
+      </div>
+    </div>
+
+    <div class="alert-box red">
+      <div class="alert-icon">🔴</div>
+      <div>
+        <div class="alert-title">Засварт + Сэлбэг нийлээд 68.7M₮ (23.4%) — Хэт өндөр</div>
+        <div class="alert-body">
+          8-р сард засварт 15.3M₮, сэлбэг 20.9M₮ болж оргилдоо хүрсэн. Яаралтай засвар, яаралтай сэлбэг худалдан авалт нь урьдчилан сэргийлэх арчилгааны хуваарь (preventive maintenance schedule) байхгүйг илтгэнэ. Яаралтай худалдан авалт нь ердийнхөөс 20–30% үнэтэй.
+        </div>
+      </div>
+    </div>
+
+    <div class="alert-box orange">
+      <div class="alert-icon">🟡</div>
+      <div>
+        <div class="alert-title">ХАБ зардал тодорхойгүй (5.9M₮)</div>
+        <div class="alert-body">
+          7–8-р сард гэнэт гарч ирсэн. Дотор нь: Очир ундраа ББСБ, Булл Капитал ББСБ, Инвескор ББСБ (зээлтэй холбоотой байж болох), СБД НДГ (Нийгмийн даатгалын газар — НДШ ангилалд байх ёстой) зэрэг байна. Ангиллыг тодруулж, зөв ангилалд шилжүүлэх шаардлагатай.
+        </div>
+      </div>
+    </div>
+
+    <div class="alert-box orange">
+      <div class="alert-icon">🟡</div>
+      <div>
+        <div class="alert-title">Цалин = 0₮ (Нэгтгэл хуудасны дагуу)</div>
+        <div class="alert-body">
+          Ажилчид байхад (хоол, кэмп зардал бий) цалин тооцоогүй байна. Цалин өөр ангилалд орсон эсвэл нэгтгэлийн алдаа байж магадгүй. Шалгах шаардлагатай.
+        </div>
+      </div>
+    </div>
+
+    <div class="alert-box blue">
+      <div class="alert-icon">🔵</div>
+      <div>
+        <div class="alert-title">8-р сарын зардал оргилдоо хүрсэн (123.7M₮)</div>
+        <div class="alert-body">
+          Дундаж сарын зардлаас (~32M₮) 4 дахин их. Энэ нь ажлын уур амьсгалын оргил байсан (зун), гэхдээ нэг удаагийн том худалдан авалт байсан эсэхийг нягтлах шаардлагатай.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Monthly table -->
+  <div class="section">
+    <div class="section-title">📅 Сар бүрийн зардлын хүснэгт</div>
+    <div class="table-wrap">
+      <table class="monthly-table">
+        <thead>
+          <tr>
+            <th>Сар</th>
+            <th style="text-align:right">Нийт</th>
+            <th style="text-align:right">Зээл</th>
+            <th style="text-align:right">Түлш</th>
+            <th style="text-align:right">Засварт</th>
+            <th style="text-align:right">Сэлбэг</th>
+            <th style="text-align:right">Оффис хангамж</th>
+            <th style="text-align:right">Хангамж</th>
+            <th style="text-align:right">Хүнс/кэмп</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="month">1 сар</td>
+            <td class="amount">12.1M₮</td>
+            <td class="amount" style="color:#2d6a9f">12.1M₮</td>
+            <td class="amount">—</td><td class="amount">—</td><td class="amount">—</td>
+            <td class="amount" style="color:#f39c12">4K₮</td>
+            <td class="amount">—</td><td class="amount">—</td>
+          </tr>
+          <tr>
+            <td class="month">2 сар</td>
+            <td class="amount">12.1M₮</td>
+            <td class="amount" style="color:#2d6a9f">12.0M₮</td>
+            <td class="amount">—</td><td class="amount">—</td><td class="amount">—</td>
+            <td class="amount" style="color:#f39c12">97K₮</td>
+            <td class="amount">—</td><td class="amount">—</td>
+          </tr>
+          <tr>
+            <td class="month">3 сар</td>
+            <td class="amount">10.7M₮</td>
+            <td class="amount" style="color:#2d6a9f">10.6M₮</td>
+            <td class="amount">—</td><td class="amount">—</td><td class="amount">—</td>
+            <td class="amount" style="color:#f39c12">132K₮</td>
+            <td class="amount">—</td><td class="amount">—</td>
+          </tr>
+          <tr>
+            <td class="month">4 сар</td>
+            <td class="amount">9.6M₮</td>
+            <td class="amount" style="color:#2d6a9f">9.4M₮</td>
+            <td class="amount">—</td><td class="amount">—</td><td class="amount">—</td>
+            <td class="amount" style="color:#f39c12">137K₮</td>
+            <td class="amount">—</td><td class="amount">—</td>
+          </tr>
+          <tr>
+            <td class="month">5 сар</td>
+            <td class="amount">27.9M₮</td>
+            <td class="amount" style="color:#2d6a9f">13.0M₮</td>
+            <td class="amount">—</td>
+            <td class="amount" style="color:#e74c3c">8.4M₮</td>
+            <td class="amount" style="color:#e74c3c">952K₮</td>
+            <td class="amount" style="color:#f39c12">4.2M₮</td>
+            <td class="amount">331K₮</td>
+            <td class="amount">1.1M₮</td>
+          </tr>
+          <tr>
+            <td class="month">6 сар</td>
+            <td class="amount">18.4M₮</td>
+            <td class="amount" style="color:#2d6a9f">11.0M₮</td>
+            <td class="amount" style="color:#27ae60">1.4M₮</td>
+            <td class="amount" style="color:#e74c3c">220K₮</td>
+            <td class="amount">—</td>
+            <td class="amount" style="color:#f39c12">1.4M₮</td>
+            <td class="amount">414K₮</td>
+            <td class="amount">1.3M₮</td>
+          </tr>
+          <tr>
+            <td class="month">7 сар</td>
+            <td class="amount" style="color:#e74c3c;font-weight:700">72.4M₮</td>
+            <td class="amount" style="color:#2d6a9f">20.0M₮</td>
+            <td class="amount" style="color:#27ae60">5.5M₮</td>
+            <td class="amount" style="color:#e74c3c">10.4M₮</td>
+            <td class="amount" style="color:#e74c3c">11.4M₮</td>
+            <td class="amount" style="color:#f39c12">10.6M₮</td>
+            <td class="amount">6.8M₮</td>
+            <td class="amount">3.6M₮</td>
+          </tr>
+          <tr style="background:#fff8f8">
+            <td class="month">8 сар 🔺</td>
+            <td class="amount" style="color:#c0392b;font-weight:800;font-size:15px">123.7M₮</td>
+            <td class="amount" style="color:#2d6a9f">25.3M₮</td>
+            <td class="amount" style="color:#27ae60">29.1M₮</td>
+            <td class="amount" style="color:#e74c3c">15.3M₮</td>
+            <td class="amount" style="color:#e74c3c">21.0M₮</td>
+            <td class="amount" style="color:#f39c12">14.4M₮</td>
+            <td class="amount">6.6M₮</td>
+            <td class="amount">4.2M₮</td>
+          </tr>
+          <tr>
+            <td class="month">9 сар</td>
+            <td class="amount">6.3M₮</td>
+            <td class="amount" style="color:#2d6a9f">1.8M₮</td>
+            <td class="amount" style="color:#27ae60">218K₮</td>
+            <td class="amount" style="color:#e74c3c">310K₮</td>
+            <td class="amount" style="color:#e74c3c">823K₮</td>
+            <td class="amount" style="color:#f39c12">2.8M₮</td>
+            <td class="amount">37K₮</td>
+            <td class="amount">150K₮</td>
+          </tr>
+          <tr style="background:#f0f6ff;font-weight:700">
+            <td>НИЙТ</td>
+            <td class="amount">293.2M₮</td>
+            <td class="amount" style="color:#2d6a9f">115.3M₮</td>
+            <td class="amount" style="color:#27ae60">36.2M₮</td>
+            <td class="amount" style="color:#e74c3c">34.6M₮</td>
+            <td class="amount" style="color:#e74c3c">34.1M₮</td>
+            <td class="amount" style="color:#f39c12">33.7M₮</td>
+            <td class="amount">14.3M₮</td>
+            <td class="amount">10.3M₮</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Recommendation -->
+  <div class="section">
+    <div class="section-title">💡 Үндсэн зөвлөмж</div>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Зөвлөмж</th>
+          <th>Хэмнэлтийн боломж</th>
+          <th>Яаралтай байдал</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td>Оффис хангамжийн зардлын ангиллыг засах — хоол, аялал, хувийн төлбөрийг зөв ангилалд шилжүүлэх</td>
+          <td style="font-weight:600;color:#1e8449">10–20M₮</td>
+          <td><span class="tag tag-bad">Яаралтай</span></td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td>Техник хэрэгслийн урьдчилан сэргийлэх арчилгааны хуваарь (preventive maintenance) нэвтрүүлэх</td>
+          <td style="font-weight:600;color:#1e8449">15–20M₮/жил</td>
+          <td><span class="tag tag-bad">Яаралтай</span></td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td>Сэлбэг эд ангийн нөөц бүрдүүлэх (stock management) — яаралтай худалдан авалтыг багасгах</td>
+          <td style="font-weight:600;color:#1e8449">5–7M₮/жил</td>
+          <td><span class="tag tag-warn">Дунд яаралтай</span></td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td>ХАБ зардлын агуулгыг тодруулж зөв ангилалд шилжүүлэх</td>
+          <td style="font-weight:600;color:#1e8449">Тайлангийн нарийвчлал</td>
+          <td><span class="tag tag-warn">Дунд яаралтай</span></td>
+        </tr>
+        <tr>
+          <td>5</td>
+          <td>хогны төлбөрийн эх шалтгааныг тодруулж байгаль орчны нийцлийг сайжруулах</td>
+          <td style="font-weight:600;color:#1e8449">600K₮+</td>
+          <td><span class="tag tag-good">Урт хугацаа</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="text-align:center;color:#aaa;font-size:12px;padding:20px 0 40px">
+    2025 оны 1–9 сарын өгөгдөл дээр үндэслэсэн · нэгтгэл--2025PP.xlsx
+  </div>
+
+</div>
+
+<script>
+// Pie chart
+const pieCtx = document.getElementById('pieChart').getContext('2d');
+new Chart(pieCtx, {
+  type: 'doughnut',
+  data: {
+    labels: ['Зээл', 'Түлш', 'Засварт ⚠️', 'Сэлбэг ⚠️', 'Оффис хангамж ⚠️', 'Хангамж', 'Хүнс/кэмп', 'Тос тосолгоо', 'ХАБ', 'Бусад'],
+    datasets: [{
+      data: [115.3, 36.2, 34.6, 34.1, 33.7, 14.3, 10.3, 8.2, 5.9, 0.6],
+      backgroundColor: [
+        '#2d6a9f','#27ae60','#e74c3c','#c0392b','#f39c12',
+        '#16a085','#2980b9','#8e44ad','#d35400','#7f8c8d'
+      ],
+      borderWidth: 2,
+      borderColor: '#fff'
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'right', labels: { font: { size: 11 }, padding: 10, boxWidth: 14 } },
+      tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed}M₮ (${(ctx.parsed/293.2*100).toFixed(1)}%)` } }
+    },
+    cutout: '55%'
+  }
+});
+
+// Monthly bar chart
+const monthCtx = document.getElementById('monthlyChart').getContext('2d');
+new Chart(monthCtx, {
+  type: 'bar',
+  data: {
+    labels: ['1 сар','2 сар','3 сар','4 сар','5 сар','6 сар','7 сар','8 сар','9 сар'],
+    datasets: [
+      { label: 'Зээл', data: [12.1,12.0,10.6,9.4,13.0,11.0,20.0,25.3,1.8], backgroundColor: '#2d6a9f' },
+      { label: 'Түлш', data: [0,0,0,0,0,1.4,5.5,29.1,0.2], backgroundColor: '#27ae60' },
+      { label: 'Засварт+Сэлбэг', data: [0,0,0,0,9.3,1.4,21.8,36.3,1.1], backgroundColor: '#e74c3c' },
+      { label: 'Оффис хангамж', data: [0,0.1,0.1,0.1,4.2,1.4,10.6,14.4,2.8], backgroundColor: '#f39c12' },
+      { label: 'Бусад', data: [0,0,0,0,1.1,3.1,14.5,18.5,0.4], backgroundColor: '#95a5a6' }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'top', labels: { font: { size: 11 }, boxWidth: 12, padding: 8 } },
+      tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y}M₮` } }
+    },
+    scales: {
+      x: { stacked: true, grid: { display: false } },
+      y: { stacked: true, ticks: { callback: v => v+'M' } }
+    }
+  }
+});
+
+// Repair trend chart
+const repCtx = document.getElementById('repairChart').getContext('2d');
+new Chart(repCtx, {
+  type: 'line',
+  data: {
+    labels: ['5 сар','6 сар','7 сар','8 сар','9 сар'],
+    datasets: [
+      {
+        label: 'Засварт',
+        data: [8.36, 0.22, 10.37, 15.33, 0.31],
+        borderColor: '#e74c3c', backgroundColor: 'rgba(231,76,60,0.1)',
+        fill: true, tension: 0.3, pointRadius: 6, pointBackgroundColor: '#e74c3c'
+      },
+      {
+        label: 'Сэлбэг',
+        data: [0.95, 0, 11.35, 20.98, 0.82],
+        borderColor: '#c0392b', backgroundColor: 'rgba(192,57,43,0.08)',
+        fill: true, tension: 0.3, pointRadius: 6, pointBackgroundColor: '#c0392b', borderDash: [5,3]
+      },
+      {
+        label: 'Нийт (Засварт+Сэлбэг)',
+        data: [9.31, 0.22, 21.72, 36.31, 1.13],
+        borderColor: '#8e44ad', backgroundColor: 'transparent',
+        fill: false, tension: 0.3, pointRadius: 7, pointBackgroundColor: '#8e44ad', borderWidth: 2.5
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'top', labels: { font: { size: 12 }, boxWidth: 14 } },
+      tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y}M₮` } }
+    },
+    scales: {
+      x: { grid: { color: '#f0f0f0' } },
+      y: { ticks: { callback: v => v+'M₮' }, grid: { color: '#f0f0f0' } }
+    }
+  }
+});
+</script>
+</body>
+</html>
